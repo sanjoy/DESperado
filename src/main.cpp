@@ -12,7 +12,9 @@ namespace {
 
 
 void show_usage() {
-  printf("Usage:\n");
+  printf(
+      "Usage: desperado -k <key in hex> -i input-file -o output-file \n"
+         "-e for encryption -d for decryption\n\n");
 }
 
 

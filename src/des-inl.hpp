@@ -16,9 +16,8 @@ struct ConcatHelper<1, element_size> {
 
 template<int length, int element_size>
 struct ConcatHelper {
-  static ALWAYS_INLINE(
-      BitVector<length * element_size> concatenate(
-          BitVector<element_size>* list)) {
+  static BitVector<length * element_size> concatenate(
+      BitVector<element_size>* list) {
     BitVector<element_size * (length - 1)> tail =
         ConcatHelper<length - 1, element_size>::concatenate(list + 1);
     return list->append(tail);
@@ -29,7 +28,22 @@ template<int Size>
 template<int list_length, int element_size>
 BitVector<list_length * element_size> BitVector<Size>::concatenate(
     BitVector<element_size>* list) {
-  return ConcatHelper<list_length, element_size>::concatenate(list);
+  if (list_length == 8 && element_size == 4 && BitsInWord >= 32) {
+    // gprof says this is hot
+    BitVector<32> result;
+    Word first_four_bits = static_cast<Word>(15) << (BitsInWord - 4);
+    result.data_[0] = (list[0].data_[0] & first_four_bits) |
+                      ((list[1].data_[0] & first_four_bits) >> 4) |
+                      ((list[2].data_[0] & first_four_bits) >> 8) |
+                      ((list[3].data_[0] & first_four_bits) >> 8) |
+                      ((list[4].data_[0] & first_four_bits) >> 8) |
+                      ((list[5].data_[0] & first_four_bits) >> 8) |
+                      ((list[6].data_[0] & first_four_bits) >> 8) |
+                      ((list[7].data_[0] & first_four_bits) >> 8);
+    return result;
+  } else {
+    return ConcatHelper<list_length, element_size>::concatenate(list);
+  }
 }
 
 

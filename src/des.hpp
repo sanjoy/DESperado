@@ -21,7 +21,7 @@ template<int Size>
 class BitVector {
  public:
   BitVector() {
-    std::memset(&data_, 0, BitSizeToWordSize(Size));
+    for (int i = 0; i < BitSizeToWordSize(Size); i++) data_[i] = 0;
   }
 
   explicit BitVector(const uint8_t *data) {
@@ -31,20 +31,32 @@ class BitVector {
   bool get_bit(int index) const {
     assert(index < Size && "BitVector index out of bounds!");
     assert(index >= 0 && "BitVector index out of bounds!");
-    int word_index = index / BitsInWord;
-    int bit_index = index % BitsInWord;
-    return (data_[word_index] & ((Word) (1 << bit_index)));
+    if (BitSizeToWordSize(Size) == 1) {
+      return (data_[0] & (static_cast<Word>(1 << index)));
+    } else {
+      int word_index = index / BitsInWord;
+      int bit_index = index % BitsInWord;
+      return (data_[word_index] & (static_cast<Word>(1 << bit_index)));
+    }
   }
 
   void set_bit(int index, bool value) {
     assert(index < Size && "BitVector index out of bounds!");
     assert(index >= 0 && "BitVector index out of bounds!");
-    int word_index = index / BitsInWord;
-    int bit_index = index % BitsInWord;
-    if (value) {
-      data_[word_index] |=  ((Word) (1 << bit_index));
+    if (BitSizeToWordSize(Size) == 1) {
+      if (value) {
+        data_[0] |=  (static_cast<Word>(1 << index));
+      } else {
+        data_[0] &=  (~(static_cast<Word>(1 << index)));
+      }
     } else {
-      data_[word_index] &=  (~((Word) (1 << bit_index)));
+      int word_index = index / BitsInWord;
+      int bit_index = index % BitsInWord;
+      if (value) {
+        data_[word_index] |=  (static_cast<Word>(1 << bit_index));
+      } else {
+        data_[word_index] &=  (~(static_cast<Word>(1 << bit_index)));
+      }
     }
   }
 
@@ -64,9 +76,25 @@ class BitVector {
     int amount_;
   };
 
-  BitVector<Size> left_shift(int amount) const {
-    LeftShiftPermutation shift_permute(amount);
-    return permute(shift_permute);
+  ALWAYS_INLINE(BitVector<Size> left_shift(int amount) const) {
+    // We should only need to optimize for two cases.  Moreover, since
+    // Size is a compile time constant, the checks should not really
+    // occur at runtime.
+    amount = amount % Size;
+    if (Size == (2 * BitsInWord)) {
+      BitVector<Size> result;
+      result.data_[0] = (data_[0] << amount) | (data_[1] >> (Size - amount));
+      result.data_[1] = (data_[1] << amount) | (data_[0] >> (Size - amount));
+      return result;
+    } else if (BitSizeToWordSize(Size) == 1) {
+      BitVector<Size> result;
+      result.data_[0] =
+          (data_[0] << amount) | (data_[0] >> (Size - amount - 1));
+      return result;
+    } else {
+      LeftShiftPermutation shift_permute(amount);
+      return permute(shift_permute);
+    }
   }
 
   template<int new_size>
@@ -206,8 +234,8 @@ class BitVector {
   Word data_[(Size + 8 * sizeof(Word) - 1) / (8 * sizeof(Word))];
 
   template<int list_length, int element_size>
-  BitVector<list_length * element_size> concatenate(
-      BitVector<element_size> *list);
+  ALWAYS_INLINE(BitVector<list_length * element_size> concatenate(
+      BitVector<element_size> *list));
 
   template<int size> friend class BitVector;
   template<typename RealSink> friend class ECBModeSink;

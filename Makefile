@@ -3,9 +3,11 @@ SRC_DIR = src
 
 ifeq ($(mode),release)
 	CXXFLAGS = -Wall -Werror -O4 -g -I./$(SRC_DIR)/
+	LDFLAGS =
 else
 	mode = debug
-	CXXFLAGS = -g3 -Wall -I./$(SRC_DIR)/
+	CXXFLAGS = -g3 -Wall -I./$(SRC_DIR)/ -pg
+	LDFLAGS = -pg -g3
 endif
 
 CXX=g++
@@ -33,7 +35,7 @@ endif
 	@echo ".........................."
 
 desperado: $(BUILD_DIR)/des.o $(BUILD_DIR)/main.o $(BUILD_DIR)/files.o
-	$(CXX) -o $@ $(BUILD_DIR)/des.o $(BUILD_DIR)/main.o $(BUILD_DIR)/files.o
+	$(CXX) -o $@ $(BUILD_DIR)/des.o $(BUILD_DIR)/main.o $(BUILD_DIR)/files.o $(LDFLAGS)
 
 $(BUILD_DIR)/des.o : $(SRC_DIR)/des.cpp $(HEADERS)
 	$(CXX) -c $(CXXFLAGS) $(SRC_DIR)/des.cpp -o $@

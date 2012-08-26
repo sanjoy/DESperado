@@ -1,26 +1,22 @@
-BUILD_DIR=build/
+BUILD_DIR = build
+SRC_DIR = src
 
 ifeq ($(mode),release)
-	CXXFLAGS = -Wall -Werror -O3 -g -I./src/
+	CXXFLAGS = -Wall -Werror -O4 -g -I./$(SRC_DIR)/
 else
 	mode = debug
-	CXXFLAGS = -g3 -Wall -I./src/
+	CXXFLAGS = -g3 -Wall -I./$(SRC_DIR)/
 endif
 
-CXX = g++
+CXX=g++
 
-SRC :=  cipher-modes.hpp	\
-	cipher-modes-inl.hpp	\
-	des.cpp			\
-	des.hpp			\
-	desl-inl.hpp		\
-	main.cpp		\
-	utils.hpp               \
-	files.hpp               \
-	files.cpp
-
-OBJECTS := $(addprefix $(BUILD_DIR), $(patsubst %.cpp, %.o, $(filter %.cpp, $(SRC))))
-HEADERS := $(filter %.hpp, $(SRC))
+HEADERS :=				\
+	src/cipher-modes.hpp		\
+	src/cipher-modes-inl.hpp	\
+	src/des.hpp			\
+	src/des-inl.hpp			\
+	src/utils.hpp			\
+	src/files.hpp
 
 .PHONY:all
 all: information desperado
@@ -36,15 +32,20 @@ endif
 	@echo "Building on "$(mode)" mode"
 	@echo ".........................."
 
-desperado: $(OBJECTS)
-	$(CXX) -o $@ $(OBJECTS)
+desperado: $(BUILD_DIR)/des.o $(BUILD_DIR)/main.o $(BUILD_DIR)/files.o
+	$(CXX) -o $@ $(BUILD_DIR)/des.o $(BUILD_DIR)/main.o $(BUILD_DIR)/files.o
 
-$(BUILD_DIR)%.o: src/%.cpp
-	mkdir -p $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+$(BUILD_DIR)/des.o : $(SRC_DIR)/des.cpp $(HEADERS)
+	$(CXX) -c $(CXXFLAGS) $(SRC_DIR)/des.cpp -o $@
+
+$(BUILD_DIR)/main.o : $(SRC_DIR)/main.cpp $(HEADERS)
+	$(CXX) -c $(CXXFLAGS) $(SRC_DIR)/main.cpp -o $@
+
+$(BUILD_DIR)/files.o : $(SRC_DIR)/files.cpp $(HEADERS)
+	$(CXX) -c $(CXXFLAGS) $(SRC_DIR)/files.cpp -o $@
 
 
 .PHONY:clean
 clean:
-	find . -name "*.o" | xargs rm -vf
-	rm -vf fooexe
+	find $(BUILD_DIR) -name "*.o" | xargs rm -vf	
+	rm -vf desperado

@@ -77,7 +77,7 @@ class IPInverse {
 
 template<typename Source, typename Sink>
 void DES::Execute(SubKeys *keys, Source& source, Sink& sink) {
-  while (!source.is_eof()) {
+  while (!source.is_end()) {
     BitVector<64> input_block = source.read_block();
 
     IP inital_permutation;

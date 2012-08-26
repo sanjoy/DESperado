@@ -13,6 +13,8 @@
 
 namespace des {
 
+template<typename RealSink> class ECBModeSink;
+
 
 // A generic class used everywhere to represent a bunch of bits.
 template<int Size>
@@ -31,7 +33,6 @@ class BitVector {
     assert(index >= 0 && "BitVector index out of bounds!");
     int word_index = index / BitsInWord;
     int bit_index = index % BitsInWord;
-    std::cout << "R " << word_index << " " << bit_index << std::endl;
     return (data_[word_index] & ((Word) (1 << bit_index)));
   }
 
@@ -40,13 +41,11 @@ class BitVector {
     assert(index >= 0 && "BitVector index out of bounds!");
     int word_index = index / BitsInWord;
     int bit_index = index % BitsInWord;
-    std::cout << "W " << word_index << " " << bit_index << std::endl;
     if (value) {
       data_[word_index] |=  ((Word) (1 << bit_index));
     } else {
       data_[word_index] &=  (~((Word) (1 << bit_index)));
     }
-    std::cout << "done " << std::endl;
   }
 
   template<typename Permutation>
@@ -211,7 +210,7 @@ class BitVector {
       BitVector<element_size> *list);
 
   template<int size> friend class BitVector;
-  friend class ECBModeSink;
+  template<typename RealSink> friend class ECBModeSink;
 };
 
 

@@ -1,6 +1,9 @@
 #ifndef __UTILS_HPP
 #define __UTILS_HPP
 
+#include <stdint.h>
+#include <iostream>
+
 namespace des {
 
 template <bool> class StaticAssertion;
@@ -42,6 +45,9 @@ class SmartPointer {
  private:
   T* pointer_;
 };
+
+template<typename T>
+T min(T a, T b) { return a > b ? b : a; }
 
 #if defined(__GNUC__) && !defined(DEBUG)
 #if (__GNUC__ >= 4)

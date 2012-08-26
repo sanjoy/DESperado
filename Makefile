@@ -9,14 +9,15 @@ endif
 
 CXX = g++
 
-SRC :=  cipher-modes.cpp	\
-	cipher-modes.hpp	\
+SRC :=  cipher-modes.hpp	\
 	cipher-modes-inl.hpp	\
 	des.cpp			\
 	des.hpp			\
 	desl-inl.hpp		\
 	main.cpp		\
-	utils.hpp
+	utils.hpp               \
+	files.hpp               \
+	files.cpp
 
 OBJECTS := $(addprefix $(BUILD_DIR), $(patsubst %.cpp, %.o, $(filter %.cpp, $(SRC))))
 HEADERS := $(filter %.hpp, $(SRC))

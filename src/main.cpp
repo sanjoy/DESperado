@@ -3,6 +3,7 @@
 
 #include "cipher-modes.hpp"
 #include "des.hpp"
+#include "files.hpp"
 
 using namespace std;
 using namespace des;
@@ -131,19 +132,33 @@ int main(int argc, char** argv) {
     }
     args.validate();
 
-    ECBModeSource source(args.input_file());
-    ECBModeSink sink(args.output_file());
+    if (args.encrypt()) {
+      PlaintextFileSource file_source(args.input_file());
+      CiphertextFileSink file_sink(args.output_file(), file_source.file_size());
 
-    SmartPointer<SubKeys> subkeys = KeyGenerator::CreateSubKeys(
-        BitVector<64>::FromHexString(args.key()));
+      ECBModeSource<FileSource::Reader> source(file_source.create_reader());
+      ECBModeSink<FileSink::Writer> sink(file_sink.create_writer());
 
-    if (!args.encrypt()) subkeys->invert();
+      SmartPointer<SubKeys> subkeys = KeyGenerator::CreateSubKeys(
+          BitVector<64>::FromHexString(args.key()));
+      DES::Execute(subkeys.get_pointer(), source, sink);
+    } else {
+      CiphertextFileSource file_source(args.input_file());
+      PlaintextFileSink file_sink(args.output_file(),
+                                  file_source.actual_size());
 
-    DES::Execute(subkeys.get_pointer(), source, sink);
+      ECBModeSource<FileSource::Reader> source(file_source.create_reader());
+      ECBModeSink<FileSink::Writer> sink(file_sink.create_writer());
+
+      SmartPointer<SubKeys> subkeys = KeyGenerator::CreateSubKeys(
+          BitVector<64>::FromHexString(args.key()));
+      subkeys->invert();
+      DES::Execute(subkeys.get_pointer(), source, sink);
+    }
+
+    return 0;
   } catch (const exception &e) {
     cerr << e.what() << endl;
     return -1;
   }
-
-  return 0;
 }

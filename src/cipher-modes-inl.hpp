@@ -5,31 +5,25 @@
 
 namespace des {
 
-bool ECBModeSource::is_eof() const {
-  return feof(fptr_);
+template<typename RealSource>
+bool ECBModeSource<RealSource>::is_end() const {
+  return source_.is_end();
 }
 
 
-BitVector<64> ECBModeSource::read_block() {
-  uint8_t word_bytes[8];
-  memset(word_bytes, 0, 8);
-  assert(!feof(fptr_));
-  fread(&word_bytes, 1, 8, fptr_);
-
-  BitVector<64> r(word_bytes);
-  std::cout << "Reading block " << r.to_string() << std::endl;
-  return r;
+template<typename RealSource>
+BitVector<64> ECBModeSource<RealSource>::read_block() {
+  uint8_t word_bytes[8] = { 0 };
+  assert(!source_.is_end());
+  source_.read(reinterpret_cast<uint8_t*>(&word_bytes), 8);
+  return BitVector<64>(word_bytes);
 }
 
 
-void ECBModeSink::consume_block(const BitVector<64> &block) {
-  int result = fwrite(block.data_, 1, 8, fptr_);
-  std::cout << sizeof(block.data_) << std::endl;
-  assert(sizeof(block.data_) == 8);
-  if (result != 8) {
-    throw std::runtime_error("error: failed (short) write");
-  }
-  std::cout << "Writing block " << block.to_string() << std::endl;
+template<typename RealSink>
+void ECBModeSink<RealSink>::consume_block(const BitVector<64> &block) {
+  sink_.write(const_cast<uint8_t*>(
+      reinterpret_cast<const uint8_t*>(&block.data_)), 8);
 }
 
 

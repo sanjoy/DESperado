@@ -54,25 +54,42 @@ class FileSink {
  public:
   class Writer {
    public:
-    Writer(int fd) : fd_(fd) { }
+    explicit Writer(FileSink* parent) : parent_(parent) { }
 
     ALWAYS_INLINE(void write(const uint8_t* buffer, int size)) {
-      int written_size = ::write(fd_, buffer, size);
-      if (written_size != size) throw std::runtime_error("error: short write");
+      parent_->write(buffer, size);
     }
 
    private:
-    int fd_;
+    FileSink* parent_;
   };
 
   explicit FileSink(std::string file_name);
 
-  Writer create_writer() { return Writer(fd_); }
+  Writer create_writer() { return Writer(this); }
 
   ~FileSink();
 
  protected:
   int fd_;
+  uint8_t* buffer_;
+  int buffer_size_;
+  int current_;
+
+  ALWAYS_INLINE(void write(const uint8_t* data, int size)) {
+    if (UNLIKELY((current_ + size) >= buffer_size_)) {
+      flush_buffer();
+    }
+    for (int i = 0; i < size; i++) buffer_[current_++] = data[i];
+  }
+
+  NEVER_INLINE(void flush_buffer()) {
+    int result = ::write(fd_, buffer_, current_);
+    if (result != current_) {
+      throw std::runtime_error("error: short write");
+    }
+    current_ = 0;
+  }
 };
 
 

@@ -39,16 +39,21 @@ FileSource::~FileSource() {
 }
 
 
-FileSink::FileSink(string file_name) {
+FileSink::FileSink(string file_name)
+    : buffer_size_(2 * 1024 * 1024),
+      current_(0) {
   fd_ = open(file_name.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
   if (fd_ == -1) {
     throw runtime_error(string("error: could not open `") +
                                file_name + "` for writing");
   }
+  buffer_ = new uint8_t[buffer_size_];
 }
 
 FileSink::~FileSink() {
+  flush_buffer();
   close(fd_);
+  delete []buffer_;
 }
 
 

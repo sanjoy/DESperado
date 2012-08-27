@@ -52,13 +52,25 @@ T min(T a, T b) { return a > b ? b : a; }
 #if defined(__GNUC__) && !defined(DEBUG)
 #if (__GNUC__ >= 4)
 #define ALWAYS_INLINE(header) inline header  __attribute__((always_inline))
+#define NEVER_INLINE(header) header __attribute__((noinline))
+#define LIKELY(x)    __builtin_expect(!!(x), 1)
+#define UNLIKELY(x)  __builtin_expect(!!(x), 0)
 #else
 #define ALWAYS_INLINE(header) inline __attribute__((always_inline)) header
+#define NEVER_INLINE(header) header
+#define LIKELY(x)    __builtin_expect(!!(x), 1)
+#define UNLIKELY(x)  __builtin_expect(!!(x), 0)
 #endif
 #elif defined(_MSC_VER) && !defined(DEBUG)
 #define ALWAYS_INLINE(header) __forceinline header
+#define NEVER_INLINE(header) header
+#define LIKELY(x)   (x)
+#define UNLIKELY(x) (x)
 #else
 #define ALWAYS_INLINE(header) inline header
+#define NEVER_INLINE(header) header
+#define LIKELY(x)   (x)
+#define UNLIKELY(x) (x)
 #endif
 
 };
